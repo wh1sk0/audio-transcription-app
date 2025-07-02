@@ -3,42 +3,44 @@ import { Upload, FileAudio, Copy, Download, X, AlertCircle, CheckCircle, Loader2
 
 const AudioTranscriptionApp = () => {
   const [files, setFiles] = useState([]);
-  const [selectedModel, setSelectedModel] = useState('whisper-1');
+  const [selectedModel, setSelectedModel] = useState('whisper');
   const [isProcessing, setIsProcessing] = useState(false);
   const [results, setResults] = useState([]);
   const [dragActive, setDragActive] = useState(false);
   const [apiKey, setApiKey] = useState('');
   const [showApiKey, setShowApiKey] = useState(false);
+  const [availableModels, setAvailableModels] = useState([]);
+  const [checkingModels, setCheckingModels] = useState(false);
   const [baseUrl, setBaseUrl] = useState('https://litellm.plat-eng.prod.cloud.siriusxm.com');
   const fileInputRef = useRef(null);
   const folderInputRef = useRef(null);
 
   const models = {
-    'whisper-1': { 
-      name: 'Whisper-1 (Standard)', 
-      description: 'OpenAI\'s standard production Whisper model - best for most use cases', 
+    'whisper': { 
+      name: 'Whisper', 
+      description: 'Standard Whisper model - good for most use cases', 
       provider: 'OpenAI',
       speed: 'Fast',
       accuracy: 'High'
     },
-    'whisper-large-v3': { 
-      name: 'Whisper Large v3', 
-      description: 'Latest and most accurate Whisper model - best for challenging audio', 
+    'openai/whisper-1': { 
+      name: 'OpenAI Whisper-1', 
+      description: 'OpenAI\'s standard production Whisper model', 
       provider: 'OpenAI',
-      speed: 'Slower',
-      accuracy: 'Highest'
+      speed: 'Fast',
+      accuracy: 'High'
     },
-    'whisper-large-v2': { 
-      name: 'Whisper Large v2', 
-      description: 'Previous generation large model - good balance of speed and accuracy', 
-      provider: 'OpenAI',
-      speed: 'Medium',
-      accuracy: 'Very High'
-    },
-    'azure/whisper-1': { 
+    'azure/whisper': { 
       name: 'Azure Whisper', 
-      description: 'Azure OpenAI Whisper - good for enterprise use cases', 
+      description: 'Azure OpenAI Whisper model', 
       provider: 'Azure',
+      speed: 'Fast',
+      accuracy: 'High'
+    },
+    'anthropic/whisper': { 
+      name: 'Anthropic Whisper', 
+      description: 'Whisper via Anthropic routing', 
+      provider: 'Anthropic',
       speed: 'Fast',
       accuracy: 'High'
     }
@@ -103,6 +105,43 @@ const AudioTranscriptionApp = () => {
     setResults(prev => prev.filter(result => result.id !== id));
   };
 
+  // Check what models are available
+  const checkAvailableModels = async () => {
+    if (!apiKey.trim()) {
+      alert('Please enter your API key first.');
+      return;
+    }
+    
+    setCheckingModels(true);
+    try {
+      const response = await fetch(`${baseUrl}/v1/models`, {
+        headers: {
+          'X-API-Key': apiKey,
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch models: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      const whisperModels = data.data?.filter(model => 
+        model.id.toLowerCase().includes('whisper')
+      ) || [];
+      
+      setAvailableModels(whisperModels);
+      
+      if (whisperModels.length > 0 && !whisperModels.find(m => m.id === selectedModel)) {
+        setSelectedModel(whisperModels[0].id);
+      }
+      
+    } catch (error) {
+      alert(`Error checking models: ${error.message}`);
+      console.error('Model check error:', error);
+    }
+    setCheckingModels(false);
+  };
+
   const formatFileSize = (bytes) => {
     if (bytes === 0) return '0 Bytes';
     const k = 1024;
@@ -125,7 +164,7 @@ const AudioTranscriptionApp = () => {
     const response = await fetch(`${baseUrl}/audio/transcriptions`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${apiKey}`,
+        'X-API-Key': apiKey,
       },
       body: formData,
     });
@@ -261,13 +300,30 @@ const AudioTranscriptionApp = () => {
             </div>
           </div>
 
-          <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-3">
             <div className={`px-3 py-2 rounded-lg text-sm ${
               apiKey.trim() ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
             }`}>
               {apiKey.trim() ? '✓ API Key Set' : '⚠ API Key Required'}
             </div>
             
+            <button
+              onClick={checkAvailableModels}
+              disabled={!apiKey.trim() || checkingModels}
+              className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+            >
+              {checkingModels ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Checking...
+                </>
+              ) : (
+                'Check Available Models'
+              )}
+            </button>
+          </div>
+          
+          <div className="flex items-center justify-between mt-4">
             <div className="text-sm text-gray-600">
               <span>Endpoint: SiriusXM LiteLLM</span>
             </div>
@@ -281,50 +337,94 @@ const AudioTranscriptionApp = () => {
               Using SiriusXM's internal LiteLLM proxy for optimized AI model access with cost management and fallbacks.
             </p>
           </div>
+          
+          {availableModels.length > 0 && (
+            <div className="mt-4 p-3 bg-green-50 rounded-lg border border-green-200">
+              <p className="text-sm text-green-800 mb-2">
+                <strong>✓ Available Whisper Models Found:</strong>
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {availableModels.map(model => (
+                  <span key={model.id} className="text-xs px-2 py-1 bg-green-100 text-green-700 rounded">
+                    {model.id}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Model Selection */}
         <div className="bg-white rounded-lg shadow-md p-6 mb-6">
           <h2 className="text-xl font-semibold mb-4">Choose Transcription Model</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {Object.entries(models).map(([key, model]) => (
-              <div 
-                key={key}
-                className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
-                  selectedModel === key 
-                    ? 'border-blue-500 bg-blue-50' 
-                    : 'border-gray-200 hover:border-gray-300'
-                }`}
-                onClick={() => setSelectedModel(key)}
-              >
-                <div className="flex items-center mb-2">
-                  <input
-                    type="radio"
-                    checked={selectedModel === key}
-                    onChange={() => setSelectedModel(key)}
-                    className="mr-2"
-                  />
-                  <h3 className="font-medium">{model.name}</h3>
-                  <span className="ml-auto text-xs px-2 py-1 bg-gray-100 rounded-full">{model.provider}</span>
+          
+          {availableModels.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {availableModels.map((model) => (
+                <div 
+                  key={model.id}
+                  className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                    selectedModel === model.id 
+                      ? 'border-blue-500 bg-blue-50' 
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                  onClick={() => setSelectedModel(model.id)}
+                >
+                  <div className="flex items-center mb-2">
+                    <input
+                      type="radio"
+                      checked={selectedModel === model.id}
+                      onChange={() => setSelectedModel(model.id)}
+                      className="mr-2"
+                    />
+                    <h3 className="font-medium">{model.id}</h3>
+                    <span className="ml-auto text-xs px-2 py-1 bg-gray-100 rounded-full">Available</span>
+                  </div>
+                  <p className="text-sm text-gray-600">
+                    {model.id.includes('whisper') ? 'OpenAI Whisper transcription model' : 'Transcription model'}
+                  </p>
                 </div>
-                <p className="text-sm text-gray-600 mb-2">{model.description}</p>
-                <div className="flex justify-between text-xs text-gray-500">
-                  <span>Speed: {model.speed}</span>
-                  <span>Accuracy: {model.accuracy}</span>
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {Object.entries(models).map(([key, model]) => (
+                <div 
+                  key={key}
+                  className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                    selectedModel === key 
+                      ? 'border-blue-500 bg-blue-50' 
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                  onClick={() => setSelectedModel(key)}
+                >
+                  <div className="flex items-center mb-2">
+                    <input
+                      type="radio"
+                      checked={selectedModel === key}
+                      onChange={() => setSelectedModel(key)}
+                      className="mr-2"
+                    />
+                    <h3 className="font-medium">{model.name}</h3>
+                    <span className="ml-auto text-xs px-2 py-1 bg-gray-100 rounded-full">{model.provider}</span>
+                  </div>
+                  <p className="text-sm text-gray-600 mb-2">{model.description}</p>
+                  <div className="flex justify-between text-xs text-gray-500">
+                    <span>Speed: {model.speed}</span>
+                    <span>Accuracy: {model.accuracy}</span>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
-          <div className="mt-4 p-3 bg-blue-50 rounded-lg">
-            <p className="text-sm text-blue-800">
-              <strong>Recommendations:</strong>
+              ))}
+            </div>
+          )}
+          
+          <div className="mt-4 p-3 bg-yellow-50 rounded-lg border border-yellow-200">
+            <p className="text-sm text-yellow-800 mb-2">
+              <strong>🔍 First time setup:</strong>
             </p>
-            <ul className="text-sm text-blue-700 mt-1 space-y-1">
-              <li>• <strong>60s or less:</strong> Whisper-1 (Standard) - fastest processing</li>
-              <li>• <strong>Poor audio quality:</strong> Whisper Large v3 - best accuracy</li>
-              <li>• <strong>Multiple languages:</strong> Whisper Large v3 - best multilingual support</li>
-              <li>• <strong>Enterprise/Azure users:</strong> Azure Whisper - integrated billing</li>
-            </ul>
+            <p className="text-sm text-yellow-700">
+              Click "Check Available Models" above to discover which Whisper models your SiriusXM LiteLLM instance supports. This will automatically update the model list with working options.
+            </p>
           </div>
         </div>
 
