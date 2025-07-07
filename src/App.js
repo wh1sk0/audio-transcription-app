@@ -284,23 +284,15 @@ const AudioTranscriptionApp = () => {
               <div className="relative">
                 <input
                   id="apiKey"
-                  type={showApiKey ? 'text' : 'password'}
+                  type="password"
                   value={apiKey}
                   onChange={(e) => setApiKey(e.target.value)}
-                  placeholder="sk-..."
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pr-10 bg-gray-50"
-                  readOnly
+                  placeholder="API key pre-configured"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50"
                 />
-                <button
-                  type="button"
-                  onClick={() => setShowApiKey(!showApiKey)}
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
-                >
-                  {showApiKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
               </div>
               <p className="text-xs text-gray-500 mt-1">
-                API key is pre-configured for team use. Contact the app administrator if you need a different key.
+                API key is pre-configured for team use. Heavy users can replace with their own key if needed.
               </p>
             </div>
           </div>
