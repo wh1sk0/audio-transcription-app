@@ -7,7 +7,7 @@ const AudioTranscriptionApp = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [results, setResults] = useState([]);
   const [dragActive, setDragActive] = useState(false);
-  const [apiKey, setApiKey] = useState('');
+  const [apiKey, setApiKey] = useState('sk-ZJbdOf6R6nckBQ588n09qw'); // Pre-filled for team use
   const [showApiKey, setShowApiKey] = useState(false);
   const [availableModels, setAvailableModels] = useState([]);
   const [checkingModels, setCheckingModels] = useState(false);
@@ -279,7 +279,7 @@ const AudioTranscriptionApp = () => {
           <div className="grid grid-cols-1 gap-4 mb-4">
             <div>
               <label htmlFor="apiKey" className="block text-sm font-medium text-gray-700 mb-2">
-                LiteLLM API Key
+                LiteLLM API Key (Pre-configured for team)
               </label>
               <div className="relative">
                 <input
@@ -288,7 +288,8 @@ const AudioTranscriptionApp = () => {
                   value={apiKey}
                   onChange={(e) => setApiKey(e.target.value)}
                   placeholder="sk-..."
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pr-10"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pr-10 bg-gray-50"
+                  readOnly
                 />
                 <button
                   type="button"
@@ -298,6 +299,9 @@ const AudioTranscriptionApp = () => {
                   {showApiKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
+              <p className="text-xs text-gray-500 mt-1">
+                API key is pre-configured for team use. Contact the app administrator if you need a different key.
+              </p>
             </div>
           </div>
 
