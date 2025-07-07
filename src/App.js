@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useRef } from 'react';
-import { Upload, FileAudio, Copy, Download, X, AlertCircle, CheckCircle, Loader2, Eye, EyeOff } from 'lucide-react';
+import { Upload, FileAudio, Copy, Download, X, AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
 
 const AudioTranscriptionApp = () => {
   const [files, setFiles] = useState([]);
@@ -268,7 +268,7 @@ const AudioTranscriptionApp = () => {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
       <div className="max-w-6xl mx-auto">
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">Audio Transcription</h1>
+          <h1 className="text-4xl font-bold text-gray-900 mb-2">Studio Resonate Audio Transcription Tool</h1>
           <p className="text-gray-600">Convert your audio files to text using AI-powered transcription</p>
         </div>
 
