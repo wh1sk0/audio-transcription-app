@@ -3,7 +3,7 @@ import { Upload, FileAudio, Copy, Download, X, AlertCircle, CheckCircle, Loader2
 
 const AudioTranscriptionApp = () => {
   const [files, setFiles] = useState([]);
-  const [selectedModel, setSelectedModel] = useState('whisper');
+  const [selectedModel, setSelectedModel] = useState('whisper-1');
   const [isProcessing, setIsProcessing] = useState(false);
   const [results, setResults] = useState([]);
   const [dragActive, setDragActive] = useState(false);
@@ -16,32 +16,25 @@ const AudioTranscriptionApp = () => {
   const folderInputRef = useRef(null);
 
   const models = {
-    'whisper': { 
-      name: 'Whisper', 
-      description: 'Standard Whisper model - good for most use cases', 
+    'whisper-1': { 
+      name: 'Whisper-1', 
+      description: 'OpenAI\'s standard Whisper model - reliable for most audio', 
       provider: 'OpenAI',
       speed: 'Fast',
       accuracy: 'High'
     },
-    'openai/whisper-1': { 
-      name: 'OpenAI Whisper-1', 
-      description: 'OpenAI\'s standard production Whisper model', 
+    'gpt-4o-transcribe': { 
+      name: 'GPT-4o Transcribe', 
+      description: 'Advanced GPT-4o for transcription - highest accuracy for complex audio', 
       provider: 'OpenAI',
-      speed: 'Fast',
-      accuracy: 'High'
+      speed: 'Medium',
+      accuracy: 'Highest'
     },
-    'azure/whisper': { 
-      name: 'Azure Whisper', 
-      description: 'Azure OpenAI Whisper model', 
-      provider: 'Azure',
-      speed: 'Fast',
-      accuracy: 'High'
-    },
-    'anthropic/whisper': { 
-      name: 'Anthropic Whisper', 
-      description: 'Whisper via Anthropic routing', 
-      provider: 'Anthropic',
-      speed: 'Fast',
+    'gpt-4o-mini-transcribe': { 
+      name: 'GPT-4o Mini Transcribe', 
+      description: 'Fast and efficient - great for clear audio and quick processing', 
+      provider: 'OpenAI',
+      speed: 'Fastest',
       accuracy: 'High'
     }
   };
@@ -125,14 +118,15 @@ const AudioTranscriptionApp = () => {
       }
       
       const data = await response.json();
-      const whisperModels = data.data?.filter(model => 
-        model.id.toLowerCase().includes('whisper')
+      const transcriptionModels = data.data?.filter(model => 
+        model.id.toLowerCase().includes('whisper') ||
+        model.id.toLowerCase().includes('transcribe')
       ) || [];
       
-      setAvailableModels(whisperModels);
+      setAvailableModels(transcriptionModels);
       
-      if (whisperModels.length > 0 && !whisperModels.find(m => m.id === selectedModel)) {
-        setSelectedModel(whisperModels[0].id);
+      if (transcriptionModels.length > 0 && !transcriptionModels.find(m => m.id === selectedModel)) {
+        setSelectedModel(transcriptionModels[0].id);
       }
       
     } catch (error) {
@@ -174,8 +168,15 @@ const AudioTranscriptionApp = () => {
       throw new Error(errorData.error?.message || `API request failed: ${response.status}`);
     }
 
-    const transcription = await response.text();
-    return transcription.trim();
+    const result = await response.text();
+    
+    // Handle both JSON and plain text responses
+    try {
+      const jsonResult = JSON.parse(result);
+      return jsonResult.text || result;
+    } catch {
+      return result.trim();
+    }
   };
 
   const processFiles = async () => {
@@ -341,7 +342,7 @@ const AudioTranscriptionApp = () => {
           {availableModels.length > 0 && (
             <div className="mt-4 p-3 bg-green-50 rounded-lg border border-green-200">
               <p className="text-sm text-green-800 mb-2">
-                <strong>✓ Available Whisper Models Found:</strong>
+                <strong>✓ Available Transcription Models Found:</strong>
               </p>
               <div className="flex flex-wrap gap-2">
                 {availableModels.map(model => (
@@ -381,7 +382,9 @@ const AudioTranscriptionApp = () => {
                     <span className="ml-auto text-xs px-2 py-1 bg-gray-100 rounded-full">Available</span>
                   </div>
                   <p className="text-sm text-gray-600">
-                    {model.id.includes('whisper') ? 'OpenAI Whisper transcription model' : 'Transcription model'}
+                    {model.id.includes('transcribe') ? 'AI transcription model' : 
+                     model.id.includes('whisper') ? 'OpenAI Whisper transcription model' : 
+                     'Transcription model'}
                   </p>
                 </div>
               ))}
@@ -418,13 +421,16 @@ const AudioTranscriptionApp = () => {
             </div>
           )}
           
-          <div className="mt-4 p-3 bg-yellow-50 rounded-lg border border-yellow-200">
-            <p className="text-sm text-yellow-800 mb-2">
-              <strong>🔍 First time setup:</strong>
+          <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+            <p className="text-sm text-blue-800 mb-2">
+              <strong>📋 Model Recommendations:</strong>
             </p>
-            <p className="text-sm text-yellow-700">
-              Click "Check Available Models" above to discover which Whisper models your SiriusXM LiteLLM instance supports. This will automatically update the model list with working options.
-            </p>
+            <ul className="text-sm text-blue-700 mt-1 space-y-1">
+              <li>• <strong>60s or less, clear audio:</strong> GPT-4o Mini Transcribe - fastest processing</li>
+              <li>• <strong>General use:</strong> Whisper-1 - reliable standard option</li>
+              <li>• <strong>Poor quality/noisy audio:</strong> GPT-4o Transcribe - highest accuracy</li>
+              <li>• <strong>Multiple speakers/languages:</strong> GPT-4o Transcribe - best for complex audio</li>
+            </ul>
           </div>
         </div>
 
