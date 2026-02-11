@@ -1,10 +1,10 @@
 {
   "files": {
-    "main.js": "/audio-transcription-app/static/js/main.8e2d0e6c.js",
+    "main.js": "/audio-transcription-app/static/js/main.2ba5512f.js",
     "index.html": "/audio-transcription-app/index.html",
-    "main.8e2d0e6c.js.map": "/audio-transcription-app/static/js/main.8e2d0e6c.js.map"
+    "main.2ba5512f.js.map": "/audio-transcription-app/static/js/main.2ba5512f.js.map"
   },
   "entrypoints": [
-    "static/js/main.8e2d0e6c.js"
+    "static/js/main.2ba5512f.js"
   ]
 }
